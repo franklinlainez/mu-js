@@ -1,0 +1,35 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+.env
+.env.*
+
+# Logs
+logs
+*.log
+*.csv
+*.out
+*.pid
+*.gz
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+.history/
+
+# Misc
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+*.rej

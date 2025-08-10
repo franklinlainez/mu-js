@@ -1,0 +1,19 @@
+{
+    "name": "monitor",
+    "version": "1.0.0",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "@notionhq/client": "^4.0.1",
+        "@slack/webhook": "^7.0.0",
+        "dotenv": "^16.6.1",
+        "execa": "^9.6.0",
+        "fs-extra": "^11.3.0",
+        "sharp": "^0.34.3",
+        "systeminformation": "^5.21.5",
+        "tesseract.js": "^6.0.1"
+    }
+}
