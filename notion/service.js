@@ -3,6 +3,16 @@ import { NOTION_DATABASE_ID } from '../config.js';
 import { PROPERTIES, STATUS } from './constants.js';
 
 /**
+ * @typedef {Object} ProcessItem
+ * @property {string} id - Notion page id
+ * @property {string} machineId
+ * @property {string} processId
+ * @property {string} channel
+ * @property {string} accountId
+ * @property {string} status
+ */
+
+/**
  * Query all records for a given machineId
  */
 export async function queryExisting(machineId) {
@@ -17,9 +27,11 @@ export async function queryExisting(machineId) {
 
 /**
  * Mark processes not in activePids as INACTIVE
+ * @returns {Promise<ProcessItem[]>}
  */
 export async function archiveInactive(existingResults, activePids) {
   const promises = [];
+  const inactiveDocuments = [];
   for (const page of existingResults.results) {
     const pagePid =
       page.properties[PROPERTIES.PROCESS_ID].rich_text[0]?.plain_text;
@@ -33,9 +45,23 @@ export async function archiveInactive(existingResults, activePids) {
           },
         })
       );
+      inactiveDocuments.push(page);
     }
   }
   await Promise.all(promises);
+  /** @type {ProcessItem[]} */
+  const items = inactiveDocuments.map((page) => {
+    const props = page.properties;
+    return /** @type {ProcessItem} */ ({
+      id: page.id,
+      machineId: props[PROPERTIES.MACHINE_ID].rich_text[0]?.plain_text || '',
+      processId: props[PROPERTIES.PROCESS_ID].rich_text[0]?.plain_text || '',
+      channel: props[PROPERTIES.CHANNEL].rich_text[0]?.plain_text || '',
+      accountId: props[PROPERTIES.ACCOUNT_ID].rich_text[0]?.plain_text || '',
+      status: props[PROPERTIES.STATUS].select?.name || '',
+    });
+  });
+  return items;
 }
 
 /**
