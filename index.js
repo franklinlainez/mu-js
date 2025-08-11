@@ -18,9 +18,9 @@ const disconnectWebhook = new IncomingWebhook(DISCONNECT_CHANNEL);
 // Queue for pending notifications
 let notificationQueue = [];
 
-// registerProcesses();
+registerProcesses();
 
 console.log('⏳ Iniciando monitoreo...');
 // setInterval(reportGeneralStatus, MONITOR_INTERVAL_MS);
 // setInterval(checkDisconnects, CHECK_INTERVAL_MS);
-checkDisconnects();
+// checkDisconnects();

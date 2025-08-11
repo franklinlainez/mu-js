@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
+import { SCREENSHOTS_DIR } from '../config.js';
 
 /**
  * Extracts a region from an image and performs OCR on it.
@@ -9,8 +10,7 @@ import Tesseract from 'tesseract.js';
  */
 export async function ocrRegion(regionName, coords, processId) {
   try {
-    const outputFile = `debug_${regionName}.png`;
-    const inputImage = `C:\\Users\\Frank\\MU\\${processId}.png`;
+    const inputImage = `${SCREENSHOTS_DIR}${processId}.png`;
     const buffer = await sharp(inputImage)
       .extract(coords)
       .sharpen()

@@ -83,8 +83,15 @@ export async function findProcessRecord(machineId, pidStr) {
 /**
  * Create a new record for a process
  */
-export async function createRecord(machineId, pidStr, channel, accountId) {
-  return notion.pages.create({
+export async function createRecord(
+  machineId,
+  pidStr,
+  channel,
+  accountId,
+  fileName,
+  uploadId
+) {
+  const data = {
     parent: { database_id: NOTION_DATABASE_ID },
     properties: {
       [PROPERTIES.MACHINE_ID]: {
@@ -97,14 +104,32 @@ export async function createRecord(machineId, pidStr, channel, accountId) {
       },
       [PROPERTIES.STATUS]: { select: { name: STATUS.ACTIVE } },
     },
-  });
+  };
+  if (fileName && uploadId) {
+    data.properties[PROPERTIES.IMAGE] = {
+      files: [
+        {
+          name: fileName,
+          type: 'file_upload',
+          file_upload: { id: uploadId },
+        },
+      ],
+    };
+  }
+  return notion.pages.create(data);
 }
 
 /**
  * Update an existing process record
  */
-export async function updateRecord(pageId, channel, accountId) {
-  return notion.pages.update({
+export async function updateRecord(
+  pageId,
+  channel,
+  accountId,
+  fileName,
+  uploadId
+) {
+  const data = {
     page_id: pageId,
     properties: {
       [PROPERTIES.CHANNEL]: { rich_text: [{ text: { content: channel } }] },
@@ -112,6 +137,74 @@ export async function updateRecord(pageId, channel, accountId) {
         rich_text: [{ text: { content: accountId } }],
       },
       [PROPERTIES.STATUS]: { select: { name: STATUS.ACTIVE } },
+    },
+  };
+  if (fileName && uploadId) {
+    data.properties[PROPERTIES.IMAGE] = {
+      files: [
+        {
+          name: fileName,
+          type: 'file_upload',
+          file_upload: { id: uploadId },
+        },
+      ],
+    };
+  }
+  return notion.pages.update(data);
+}
+
+export async function attachFileUploadToPage(
+  pageId,
+  uploadId,
+  filename,
+  fileProperty = PROPERTIES.IMAGE
+) {
+  return notion.pages.update({
+    page_id: pageId,
+    properties: {
+      [fileProperty]: {
+        files: [
+          {
+            name: filename,
+            type: 'file_upload',
+            file_upload: { id: uploadId },
+          },
+        ],
+      },
+    },
+  });
+}
+
+export async function createRecordWithUpload({
+  machineId,
+  pidStr,
+  channel,
+  accountId,
+  uploadId,
+  filename,
+  fileProperty = PROPERTIES.IMAGE,
+}) {
+  return notion.pages.create({
+    parent: { database_id: NOTION_DATABASE_ID },
+    properties: {
+      [PROPERTIES.MACHINE_ID]: {
+        rich_text: [{ text: { content: machineId } }],
+      },
+      [PROPERTIES.PROCESS_ID]: { rich_text: [{ text: { content: pidStr } }] },
+      [PROPERTIES.CHANNEL]: { rich_text: [{ text: { content: channel } }] },
+      [PROPERTIES.ACCOUNT_ID]: {
+        rich_text: [{ text: { content: accountId } }],
+      },
+      [PROPERTIES.STATUS]: { select: { name: STATUS.ACTIVE } },
+      [fileProperty]: {
+        files: [
+          {
+            name: filename,
+            type: 'file_upload',
+            file_upload: { id: uploadId },
+          },
+        ],
+      },
     },
   });
 }

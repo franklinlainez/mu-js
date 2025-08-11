@@ -6,6 +6,7 @@ export const PROPERTIES = {
   CHANNEL: 'channel',
   ACCOUNT_ID: 'accountId',
   STATUS: 'status',
+  IMAGE: 'imagen',
 };
 
 export const STATUS = {

@@ -1,5 +1,6 @@
 import { execa } from 'execa';
 import { SCREENSHOTS_ACTIONS } from './constants.js';
+import { SCREENSHOTS_DIR } from '../config.js';
 
 /**
  * @typedef {keyof typeof SCREENSHOTS_ACTIONS} ActionKey
@@ -24,7 +25,7 @@ export async function execWinCommands(processId, action) {
       '-ProcessId',
       processId,
       '-OutputDir',
-      'C:\\Users\\Frank\\MU',
+      SCREENSHOTS_DIR.replaceAll('/', '\\'),
     ],
     { stdio: 'inherit' }
   );
