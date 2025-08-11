@@ -2,10 +2,9 @@ import dotenv from 'dotenv';
 import si from 'systeminformation';
 import { Client } from '@notionhq/client';
 import { IncomingWebhook } from '@slack/webhook';
-import { exec } from 'child_process';
-import { execa } from 'execa';
-import Tesseract from 'tesseract.js';
-import sharp from 'sharp';
+import { ocrRegion } from './utils/ocrRegion.js';
+import { ocrRegionsMap } from './constants.js';
+import { execWinCommands } from './windows/commands.js';
 
 dotenv.config();
 
@@ -46,116 +45,118 @@ async function registrarProcesos() {
   const mainProcs = list.filter((p) => p.name === MAIN_PROCESS_NAME);
   const activePids = mainProcs.map((p) => p.pid.toString());
 
-  // Archivar o actualizar status a INACTIVE si el PID no está activo
+  // 1.1. Marcar INACTIVE los que ya no están
+  const inactivePromises = [];
   for (const page of existing.results) {
     const pagePid = page.properties.processId.rich_text[0]?.plain_text;
-    const status = page.properties?.status?.select?.name;
+    const status = page.properties.status.select?.name;
     if (!activePids.includes(pagePid) && status !== 'INACTIVE') {
-      await notion.pages.update({
-        page_id: page.id,
-        properties: {
-          status: { select: { name: 'INACTIVE' } },
-        },
-      });
+      inactivePromises.push(
+        notion.pages.update({
+          page_id: page.id,
+          properties: { status: { select: { name: 'INACTIVE' } } },
+        })
+      );
     }
   }
+  await Promise.all(inactivePromises);
 
-  // 2. Crear registros nuevos (optimizado con Promise.all)
-  // 2.1. Consultar en paralelo cuáles ya existen
-  const queryPromises = mainProcs.map((proc) => {
+  // 2. Consultar cuáles existen y cuáles no
+  const queryPromises = mainProcs.map(async (proc) => {
     const pidStr = proc.pid.toString();
-    return notion.databases
-      .query({
-        database_id: databaseId,
-        filter: {
-          and: [
-            { property: 'machineId', rich_text: { equals: machineId } },
-            { property: 'processId', rich_text: { equals: pidStr } },
-          ],
-        },
-      })
-      .then((resp) => ({ pidStr, exists: resp.results.length > 0 }));
+    const resp = await notion.databases.query({
+      database_id: databaseId,
+      filter: {
+        and: [
+          { property: 'machineId', rich_text: { equals: machineId } },
+          { property: 'processId', rich_text: { equals: pidStr } },
+        ],
+      },
+    });
+    return {
+      pidStr,
+      exists: resp.results.length > 0,
+      pageId: resp.results[0]?.id,
+    };
   });
-
   const queryResults = await Promise.all(queryPromises);
-  const toCreate = queryResults.filter((r) => !r.exists).map((r) => r.pidStr);
 
-  // 2.2. Crear los que no existen en paralelo
-  const createPromises = toCreate.map((pidStr) =>
-    notion.pages.create({
+  const toCreate = queryResults.filter((r) => !r.exists).map((r) => r.pidStr);
+  const toUpdate = queryResults.filter((r) => r.exists);
+
+  // 3. Tomar foto de cada proceso activo
+  for (const processId of activePids) {
+    await execWinCommands(processId, 'enfocar_tomar_foto_ocultar');
+  }
+
+  // 4. Crear registros nuevos
+  const createPromises = toCreate.map(async (pidStr) => {
+    let [
+      {
+        data: { text: channelName },
+      },
+      {
+        data: { text: charName },
+      },
+    ] = await Promise.all([
+      ocrRegion('server', ocrRegionsMap.server, pidStr),
+      ocrRegion('charName', ocrRegionsMap.charName, pidStr),
+    ]);
+
+    const match = channelName.match(/Arcadia-(\d+)/);
+    if (match) channelName = match[1];
+    charName = charName.trim();
+
+    return notion.pages.create({
       parent: { database_id: databaseId },
       properties: {
         machineId: { rich_text: [{ text: { content: machineId } }] },
         processId: { rich_text: [{ text: { content: pidStr } }] },
+        channel: { rich_text: [{ text: { content: channelName } }] },
+        accountId: { rich_text: [{ text: { content: charName } }] },
         status: { select: { name: 'ACTIVE' } },
       },
-    })
-  );
-  await Promise.all(createPromises);
-}
+    });
+  });
 
-async function comandosCMD() {
-  const { stdout } = await execa(
-    'powershell.exe',
-    [
-      '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-File',
-      'C:\\Users\\Frank\\screenshots.ps1',
-      '-Action',
-      'enfocar_tomar_foto',
-      '-ProcessId',
-      '41572',
-      '-OutputDir',
-      'C:\\Users\\Frank\\MU',
-    ],
-    { stdio: 'inherit' }
-  );
-  console.log(stdout);
-}
+  // 5. Actualizar registros existentes
+  const updatePromises = toUpdate.map(async ({ pidStr, pageId }) => {
+    let [
+      {
+        data: { text: channelName },
+      },
+      {
+        data: { text: charName },
+      },
+    ] = await Promise.all([
+      ocrRegion('server', ocrRegionsMap.server, pidStr),
+      ocrRegion('charName', ocrRegionsMap.charName, pidStr),
+    ]);
 
-// comandosCMD();
-// registrarProcesos();
+    const match = channelName.match(/Arcadia-(\d+)/);
+    if (match) channelName = match[1];
+    charName = charName.trim();
 
-const inputImage = 'C:\\Users\\Frank\\MU\\41572.png'; // tu imagen
+    return notion.pages.update({
+      page_id: pageId,
+      properties: {
+        channel: { rich_text: [{ text: { content: channelName } }] },
+        accountId: { rich_text: [{ text: { content: charName } }] },
+        status: { select: { name: 'ACTIVE' } },
+      },
+    });
+  });
 
-// Definimos las regiones de interés
-const regiones = {
-  charName: {
-    left: 240,
-    top: 130,
-    width: 150,
-    height: 40,
-  },
-  server: { left: 265, top: 360, width: 200, height: 40 },
-};
-
-// OCR de una región específica
-async function ocrRegion(regionName, coords) {
-  try {
-    const outputFile = `debug_${regionName}.png`;
-    const buffer = await sharp(inputImage)
-      .extract(coords)
-      .sharpen()
-      .grayscale()
-      .modulate({ brightness: 1.1, contrast: 2.5 }) // más contraste
-      .toFile(outputFile); // guarda imagen recortada
-
-    await Tesseract.recognize(outputFile).then((result) =>
-      console.log(
-        `OCR completado para "${regionName}". Texto detectado: ${result.data.text.trim()}`
-      )
-    );
-  } catch (err) {
-    console.error(`Error procesando "${regionName}":`, err);
-  }
+  await Promise.all([...createPromises, ...updatePromises]);
 }
 
 // Procesar ambas regiones
-(async () => {
-  await ocrRegion('channel', regiones.charName);
-  await ocrRegion('charName', regiones.server);
-})();
+// (async () => {
+//   await ocrRegion('channel', regiones.charName);
+//   await ocrRegion('charName', regiones.server);
+// })();
 
+// comandosCMD();
+registrarProcesos();
+// comandosCMD();
 // comandosCMD();
