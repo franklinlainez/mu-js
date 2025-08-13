@@ -4,7 +4,11 @@ dotenv.config();
 
 // Notion configuration
 export const NOTION_TOKEN = process.env.NOTION_TOKEN;
-export const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
+export const NOTION_MONITOR_DATABASE_ID =
+  process.env.NOTION_MONITOR_DATABASE_ID;
+export const NOTION_ACTIONS_DATABASE_ID =
+  process.env.NOTION_ACTIONS_DATABASE_ID;
+
 export const MACHINE_ID = process.env.MACHINE_ID;
 
 // Slack configuration

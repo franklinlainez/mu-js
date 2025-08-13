@@ -7,6 +7,7 @@ import {
   reportDisconnects,
   checkDisconnects,
 } from './modules/monitorProcesses.js';
+import { getActions } from './notion/service.js';
 
 const MONITOR_INTERVAL_MS = 1 * 60 * 1000; // 30 minutos
 const CHECK_INTERVAL_MS = 1 * 60 * 1000; // 5 minutos
@@ -18,9 +19,13 @@ const disconnectWebhook = new IncomingWebhook(DISCONNECT_CHANNEL);
 // Queue for pending notifications
 let notificationQueue = [];
 
-registerProcesses();
+// registerProcesses();
 
 console.log('⏳ Iniciando monitoreo...');
 // setInterval(reportGeneralStatus, MONITOR_INTERVAL_MS);
 // setInterval(checkDisconnects, CHECK_INTERVAL_MS);
 // checkDisconnects();
+
+getActions().then((actions) => {
+  console.log('🔍 Acciones obtenidas:', JSON.stringify(actions, null, 2));
+});
