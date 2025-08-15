@@ -7,7 +7,12 @@ import {
   reportDisconnects,
   checkDisconnects,
 } from './modules/monitorProcesses.js';
-import { getActions } from './notion/service.js';
+import {
+  createRecord,
+  findProcessRecord,
+  getActions,
+  updateRecord,
+} from './notion/service.js';
 
 const MONITOR_INTERVAL_MS = 1 * 60 * 1000; // 30 minutos
 const CHECK_INTERVAL_MS = 1 * 60 * 1000; // 5 minutos
@@ -26,6 +31,10 @@ console.log('⏳ Iniciando monitoreo...');
 // setInterval(checkDisconnects, CHECK_INTERVAL_MS);
 // checkDisconnects();
 
-getActions().then((actions) => {
-  console.log('🔍 Acciones obtenidas:', JSON.stringify(actions, null, 2));
-});
+// getActions().then((actions) => {
+//   actions.results[0].properties?.isActive?.type === 'checkbox' &&
+//     // actions.results[0].properties?.isActive?.checkbox;
+//     console.log('🔍 Acciones obtenidas:', JSON.stringify(actions, null, 2));
+// });
+
+// createRecord('Laptop 2', '1235678', '6', 'LOL');

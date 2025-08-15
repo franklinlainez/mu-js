@@ -95,6 +95,9 @@ export async function registerProcesses() {
 export async function getAndArchiveInactive() {
   try {
     const existing = await queryExisting(MACHINE_ID);
+
+    existing.results[0];
+
     const { list } = await si.processes();
     const activePids = list
       .filter((p) => p.name === MAIN_PROCESS_NAME)
