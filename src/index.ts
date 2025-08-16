@@ -37,4 +37,4 @@ console.log('⏳ Iniciando monitoreo...');
 //     console.log('🔍 Acciones obtenidas:', JSON.stringify(actions, null, 2));
 // });
 
-// createRecord('Laptop 2', '1235678', '6', 'LOL');
+createRecord('Laptop 2', '111111', '6', 'LOL');

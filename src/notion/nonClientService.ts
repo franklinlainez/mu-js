@@ -5,14 +5,8 @@ import { NOTION_TOKEN } from '../config.js';
 
 const NOTION_VERSION = '2022-06-28';
 
-/**
- * Crea un file_upload en Notion.
- * @param {string} filename - Nombre con extensión (ej. "1234.png")
- * @param {string} contentType - MIME (ej. "image/png")
- * @returns {Promise<{ id: string }>}
- */
 export async function createFileUpload(
-  filename,
+  filename: string,
   contentType = 'application/octet-stream'
 ) {
   const { data } = await axios.post(
@@ -26,18 +20,12 @@ export async function createFileUpload(
       },
     }
   );
-  return data; // { id, ... }
+  return data;
 }
 
-/**
- * Envía el binario (buffer en memoria) al file_upload creado.
- * @param {string} uploadId
- * @param {Buffer|Uint8Array} buffer
- * @param {{ filename?: string, contentType?: string }} [opts]
- */
 export async function sendFileUploadFromBuffer(
-  uploadId,
-  buffer,
+  uploadId: string,
+  buffer: Buffer | Uint8Array,
   { filename = 'upload.bin', contentType = 'application/octet-stream' } = {}
 ) {
   const form = new FormData();
@@ -58,13 +46,12 @@ export async function sendFileUploadFromBuffer(
   );
 }
 
-/**
- * @param {Buffer|Uint8Array} buffer
- * @param {{ filename: string, contentType?: string }} opts
- */
 export async function uploadFromBuffer(
-  buffer,
-  { filename, contentType = 'application/octet-stream' }
+  buffer: Buffer | Uint8Array,
+  {
+    filename,
+    contentType = 'application/octet-stream',
+  }: { filename: string; contentType?: string }
 ) {
   const fu = await createFileUpload(filename, contentType);
   await sendFileUploadFromBuffer(fu.id, buffer, { filename, contentType });

@@ -43,7 +43,7 @@ export async function reportGeneralStatus() {
   }
 }
 
-export async function reportDisconnects(charNamesWithAcc = []) {
+export async function reportDisconnects(charNamesWithAcc: string[] = []) {
   try {
     await disconnects.send({
       text: `🚨 Desconexiones detectadas:
@@ -78,7 +78,7 @@ export async function checkDisconnectsLocal() {
 
 export const checkDisconnects = async () => {
   const inactiveDocs = await getAndArchiveInactive();
-  if (inactiveDocs.length > 0) {
+  if (inactiveDocs?.length) {
     const charNamesWithAcc = inactiveDocs.map(
       (doc) => `${doc.accountId} (${doc.accountId}) - Channel: ${doc.channel}`
     );

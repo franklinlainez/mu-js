@@ -10,8 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
-    "outDir": "dist",
-    "allowJs": true
+    "outDir": "dist"
   },
   "include": ["src/**/*"]
 }

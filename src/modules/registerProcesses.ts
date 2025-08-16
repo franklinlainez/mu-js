@@ -13,11 +13,12 @@ import { execWinCommands } from '../windows/commands.js';
 import { SCREENSHOTS_ACTIONS } from '../windows/constants.js';
 import fs from 'fs/promises';
 import { uploadFromBuffer } from '../notion/nonClientService.js';
+import type { RecognizeResult } from 'tesseract.js';
 
 /**
  * Perform OCR on regions and clean results
  */
-async function getChannelAndAccount(pidStr) {
+async function getChannelAndAccount(pidStr: string) {
   const [
     {
       data: { text: rawChannel },
@@ -29,15 +30,13 @@ async function getChannelAndAccount(pidStr) {
     ocrRegion('server', ocrRegionsMap.server, pidStr),
     ocrRegion('charName', ocrRegionsMap.charName, pidStr),
   ]);
+
   const match = rawChannel.match(/Arcadia-(\d+)/);
   const channel = match ? match[1] : rawChannel.trim();
   const accountId = rawChar.trim();
   return { channel, accountId };
 }
 
-/**
- * Main routine: register processes in Notion
- */
 export async function registerProcesses() {
   // 1. Query existing records and active processes
   const { list } = await si.processes();
